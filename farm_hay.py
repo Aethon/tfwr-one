@@ -4,6 +4,9 @@ from farm_common import harvest_with_companion, plant_crop
 
 NO_OVERPLANTS = [ ]
 
+def get_crop_costs(count, ctx):
+	return count, {}
+
 def plant_grass():
 	return plant(Entities.Grass)
 	

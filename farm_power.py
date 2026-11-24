@@ -6,6 +6,17 @@ import farm_hay
 SUNFLOWER_PATTERNS_KEY = "sunflower_patterns"
 NO_OVERPLANTS = [ Entities.Sunflower ]
 
+def get_crop_costs(count, ctx):
+	component_costs = get_cost(Entities.Sunflower)
+	plot_yield = 2**(num_unlocked(Unlocks.Sunflowers) - 1) * 8 # harvested in order to get gain
+
+	component_crop_costs = {}
+	for item in component_costs:
+		item_count = component_costs[item]
+		component_crop_costs[item] = farm.get_crop_costs(item_count * count / plot_yield)	
+	
+	return count, component_crop_costs
+
 def plant_sunflower():
 	if get_ground_type() != Grounds.Soil:
 		till()

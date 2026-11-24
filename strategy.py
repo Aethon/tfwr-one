@@ -23,9 +23,10 @@ def get_available_unlocks():
 
 	return available
 
-# (count: int, have: int, need: int, component_cost: { Item -> tuple}, total_needed)
+# (count: int, have: int, need: int, component_cost: { Item -> tuple }, total_needed)
 def get_item_costs(item, count, inventory):
 	entity = farm.get_entity_for_item(item)
+	crop_yield = farm.get_yield_for_item(item)
 
 	have = inventory[item]
 	reduction = min(count, have)
@@ -33,22 +34,23 @@ def get_item_costs(item, count, inventory):
 	inventory[item] = have - reduction
 
 	if need == 0 or entity == None:
-		return (count, have, need, {}, need)
+		return count, have, need, {}, need
 
 	entity_cost = get_cost(entity)
 	if len(entity_cost) == 0:
-		return (count, have, need, {}, need)
+		return count, have, need, {}, need
 
 	component_costs = {}
 	total = need
+	need_after_yield = need / crop_yield
 	for component_item in entity_cost:
 		component_count = entity_cost[component_item]
-		component_cost_tree = get_item_costs(component_item, need * component_count, inventory)
+		component_cost_tree = get_item_costs(component_item, need_after_yield * component_count, inventory)
 		component_costs[component_item] = component_cost_tree
 		_, _, _, _, sub_total = component_cost_tree
 		total += sub_total
 
-	return (count, have, need, component_costs, total)
+	return count, have, need, component_costs, total
 
 def get_unlock_costs(unlock, inventory):
 	unlock_cost = get_cost(unlock)
@@ -59,7 +61,7 @@ def get_unlock_costs(unlock, inventory):
 		component_costs[item] = item_cost
 		_, _, _, _, sub_total = item_cost
 		total = total + sub_total
-	return (component_costs, total)
+	return component_costs, total
 
 def get_real_inventory():
 	inventory = {}

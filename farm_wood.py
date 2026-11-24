@@ -3,8 +3,11 @@ import contexts
 from farm_common import harvest_with_companion, plant_crop
 import farm_hay
 
-NO_OVERPLANTS = [ Entities.Tree ]
-	
+NO_OVERPLANTS = [ ]
+
+def get_crop_costs(count, ctx):
+	return count, {}
+
 def plant_bush():
 	return plant(Entities.Bush)
 	

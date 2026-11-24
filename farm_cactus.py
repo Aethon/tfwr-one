@@ -5,6 +5,26 @@ from farm_common import harvest_with_companion, plant_crop
 CACTUS_LIST_KEY = "cactii"
 NO_OVERPLANTS = [ Entities.Cactus ]
 
+def get_crop_costs(count, ctx):
+	if count == 0:
+		return 0, {}
+
+	_, _, cx, cy, _ = contexts.get_area(ctx)
+
+	component_costs = get_cost(Entities.Cactus)
+	plot_yield = 2**(num_unlocked(Unlocks.Cactus) - 1)
+	plot_count = cx * cy
+	crop_yield = plot_count ** 2 * plot_yield
+	crops_needed = max(count / crop_yield, 1)
+	count_needed = crops_needed * plot_count
+
+	component_crop_costs = {}
+	for item in component_costs:
+		count = component_costs[item]
+		component_crop_costs[item] = farm.get_crop_costs(count_needed * count)
+	
+	return count, component_crop_costs
+
 def plant_cactus():
 	if get_ground_type() != Grounds.Soil:
 		till()
@@ -25,42 +45,45 @@ def farm_plot(ctx):
 	contexts.get_value(ctx, CACTUS_LIST_KEY).append((get_pos_x(), get_pos_y()))
 	return True
 
-def _sort(ctx, unsorted_rows, unsorted_cols):
-	xi, yi, dx, dy, _ = contexts.get_area(ctx)
-	next_unsorted_rows = set()
-	next_unsorted_cols = set()
-	
-	for row in unsorted_rows:
-		changed = True
-		while changed:
-			changed = False
-			for col in range(xi, xi + dx - 1):
-				map.move_to(col, row)
-				this = measure()
-				that = measure(East)
-				if (that < this):
-					swap(East)
-					next_unsorted_cols.add(col)
-					next_unsorted_cols.add(col + 1)
-					next_unsorted_rows.add(row)
-					changed = True
-				
-	for col in unsorted_cols:
-		changed = True
-		while changed:
-			changed = False
-			for row in range(yi, yi + dy - 1):
-				map.move_to(col, row)
-				this = measure()
-				that = measure(North)
-				if (that < this):
-					swap(North)
-					next_unsorted_rows.add(row)
-					next_unsorted_rows.add(row + 1)
-					next_unsorted_cols.add(col)
-					changed = True
-	
-	return next_unsorted_rows, next_unsorted_cols
+def _sort_line_pass_forward(start, end, direction):
+
+	changed = False
+	for n in range(start, end - 1):
+		this = measure()
+		that = measure(direction)
+		if (that < this):
+			swap(direction)
+			changed = True
+		move(direction)
+
+	return changed
+
+def _sort_line_pass_backward(start, end, direction,):
+
+	changed = False
+	for n in range(end, start + 1, -1):
+		this = measure()
+		that = measure(direction)
+		if (that > this):
+			swap(direction)
+			changed = True
+		move(direction)
+
+	return changed
+
+def _sort_line(start, count, forward, backward):
+	n0 = start
+	nn = n0 + count
+	while True:
+		if not _sort_line_pass_forward(n0, nn, forward):
+			return
+		move(backward)
+		nn = nn - 1
+
+		if not _sort_line_pass_backward(n0, nn, backward):
+			return
+		move(forward)
+		n0 = n0 + 1
 	
 def farm(ctx):
 	change_hat(Hats.Cactus_Hat)
@@ -76,18 +99,16 @@ def farm(ctx):
 		if len(pat) == 0:
 			break
 	
-	# sort them all
+	# sort them
 	xi, yi, dx, dy, _ = contexts.get_area(ctx)
-	unsorted_rows = set()
-	for y in range(yi, yi + dy):
-		unsorted_rows.add(y)
-		
-	unsorted_cols = set()
-	for x in range(xi, xi + dx):
-		unsorted_cols.add(x)
 	
-	while len(unsorted_rows) > 0 or len(unsorted_cols) > 0:
-		unsorted_rows, unsorted_cols = _sort(ctx, unsorted_rows, unsorted_cols)
+	for row in range(yi, yi + dy):
+		map.move_to(xi, row)
+		_sort_line(xi, dx, East, West)
+				
+	for col in range(xi, xi + dx):
+		map.move_to(col, yi)
+		_sort_line(yi, dy, North, South)
 	
 	return harvest()
 	

@@ -80,6 +80,7 @@ def get_area():
 	
 def get_context():
 	return _ctx
+	
 def get_size():
 	return _dx, _dy
 	
@@ -133,7 +134,23 @@ def create_serpentine_pattern(ctx):
 		for y in r:
 			pattern.append((x, y))
 	return pattern
+
+def create_ouroboros_pattern(ctx):
+	x0, y0, cx, cy, _ = contexts.get_area(ctx)
 	
+	pattern = []
+	for x in range(x0, x0 + cx):
+		pattern.append((x, y0))
+	
+	for x in range(x0 + cx - 1, x0 - 1, - 1):
+		if x % 2 == 1:
+			r = range(y0 + 1, y0 + cy)
+		else:
+			r = range(y0 + cy - 1, y0, -1)
+		for y in r:
+			pattern.append((x, y))
+	return pattern
+
 def do_for_pattern(pattern, action, ctx):
 	current = 0
 	for pos in pattern:

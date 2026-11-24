@@ -4,6 +4,9 @@ import farm_context
 from farm_common import harvest_with_companion
 import farm_hay
 
+def get_crop_costs(count, ctx):
+	return count, {}
+
 def farm(ctx):
 	change_hat(Hats.Purple_Hat)
 	pat = map.create_serpentine_pattern(ctx)

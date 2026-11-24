@@ -6,6 +6,17 @@ from farm_common import harvest_with_companion, plant_crop
 PUMPKIN_LIST_KEY = "pumpkins"
 NO_OVERPLANTS = [ Entities.Pumpkin ]
 
+def get_crop_costs(count, ctx):
+	component_costs = get_cost(Entities.Pumpkin)
+	plot_yield = 2**(num_unlocked(Unlocks.Pumpkin) - 1) * 0.7 # reduced for failure rate (20% +breathing room)
+
+	component_crop_costs = {}
+	for item in component_costs:
+		item_count = component_costs[item]
+		component_crop_costs[item] = farm.get_crop_costs(item_count * count / plot_yield)	
+	
+	return count, component_crop_costs
+
 def plant_pumpkin():
 	return plant(Entities.Pumpkin)
 

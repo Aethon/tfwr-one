@@ -58,7 +58,7 @@ def is_in(pos, area):
 	x, y = pos
 	x0, y0, cx, cy, _ = area
 
-    return not (x < x0 or x >= x0 + cx or y < y0 or y >= y0 + cy)
+	return not (x < x0 or x >= x0 + cx or y < y0 or y >= y0 + cy)
 
 def get_base_pos(pos, area):
 	x, y = pos
