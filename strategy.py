@@ -1,107 +1,135 @@
 import map
 import farm
+from common import format_number
 
-def add_costs(source, dest):
-	for add in source:
-		val = 0
-		if add in dest:
-			val = dest[add]
-		dest[add] = val + source[add]
+def get_available_unlocks():
+	def can_unlock(unlock):
+		unlock_cost = get_cost(unlock)
+		if len(unlock_cost) == 0:
+			# no cost => already have it
+			return False
+					
+		for item in unlock_cost:
+			if not farm.can_farm(item):
+				return False
 
-			
-# direct - dict[Unlocks -> int]     
-def _expand_item_cost(item, count, inventory):
+		return True
+
+	available = []
+
+	for unlock in Unlocks:
+		if can_unlock(unlock):
+			available.append(unlock)
+
+	return available
+
+# (count: int, have: int, need: int, component_cost: { Item -> tuple}, total_needed)
+def get_item_costs(item, count, inventory):
 	entity = farm.get_entity_for_item(item)
-	if entity == None:
-		return None
 
-	inventory_count = inventory[item]
-	reduction = min(count, inventory_count)
-	count = count - reduction
-	inventory[item] = inventory_count - reduction
-		
+	have = inventory[item]
+	reduction = min(count, have)
+	need = count - reduction
+	inventory[item] = have - reduction
+
+	if need == 0 or entity == None:
+		return (count, have, need, {}, need)
+
 	entity_cost = get_cost(entity)
-				
 	if len(entity_cost) == 0:
-		return { entity: count }
-		
-	cost = {}
-	for sub_entity in entity_cost:
-		expanded = _expand_item_cost(sub_entity, count * entity_cost[sub_entity], inventory)
-		if expanded == None:
-			return None
-		add_costs(expanded, cost)
-	return cost
+		return (count, have, need, {}, need)
 
-def check_unlock(unlock, inventory):
-	
-	cost = {}
+	component_costs = {}
+	total = need
+	for component_item in entity_cost:
+		component_count = entity_cost[component_item]
+		component_cost_tree = get_item_costs(component_item, need * component_count, inventory)
+		component_costs[component_item] = component_cost_tree
+		_, _, _, _, sub_total = component_cost_tree
+		total += sub_total
+
+	return (count, have, need, component_costs, total)
+
+def get_unlock_costs(unlock, inventory):
 	unlock_cost = get_cost(unlock)
-	quick_print(unlock, unlock_cost, len(unlock_cost))
-	if len(unlock_cost) == 0:
-		# no cost => already have it
-		return None
-		
-	unlock_count = num_unlocked(unlock)
-		
+	component_costs = {}
+	total = 0
 	for item in unlock_cost:
-		expanded = _expand_item_cost(item, unlock_cost[item], inventory)
-		if expanded == None:
-			return None
-		add_costs(expanded, cost)
-		
-	items = 0
-	for entity in cost:
-		items = items + cost[entity]
+		item_cost = get_item_costs(item, unlock_cost[item], inventory)
+		component_costs[item] = item_cost
+		_, _, _, _, sub_total = item_cost
+		total = total + sub_total
+	return (component_costs, total)
 
-	return (cost, items)
-
-def _get_real_inventory():
+def get_real_inventory():
 	inventory = {}
 	for item in Items:
 		inventory[item] = num_items(item)
 	return inventory
-		
-def select_next_unlock(get_inventory):
-	
+
+def get_selected_unlock_costs(unlocks, get_inventory):
 	if get_inventory == None:
-		get_inventory = _get_real_inventory
-		
-	easiest = None
-	easiest_cost = None
-	easiest_items = None
-	for u in Unlocks:
-		check = check_unlock(u, get_inventory())
-		if check == None:
-			continue
-			
-		cost, items = check
-		if easiest == None or items < easiest_items:
-			easiest = u
-			easiest_cost = cost
-			easiest_items = items
+		get_inventory = get_real_inventory
 
-	if easiest == None:
-		return None                
-	return easiest      
+	selected_unlock_costs = {}
+	for unlock in unlocks:
+		inventory = get_inventory()
+		selected_unlock_costs[unlock] = get_unlock_costs(unlock, inventory)
 
-# Farm until the next unlock is unlocked, or until nothing can be unlocked
-def farm_next_unlock(context, get_inventory):
-	   
-	next_unlock = select_next_unlock(get_inventory)
-	print(next_unlock)
+	return selected_unlock_costs
 	
-	if farm.farm_for_all(get_cost(next_unlock), context):
-		unlock(next_unlock)
-		map.init(None, None)
+
+def select_next_unlock(unlock_cost_map):
+	
+	min_unlock = None
+	min_item_count = None
+	min_cost_map = None
+	for unlock in unlock_cost_map:
+		cost_map, item_count = unlock_cost_map[unlock]
+		if min_unlock == None or item_count < min_item_count:
+			min_unlock = unlock
+			min_item_count = item_count
+			min_cost_map = cost_map
+
+	if min_unlock == None:
+		return None
+
+	return (min_unlock, min_item_count, min_cost_map)
+
+def dump_unlock_costs(unlock_cost_map):
+	def dump_item_costs(indent, item_cost_map):
+		for item in item_cost_map:
+			count, have, need, sub_cost_map, total = item_cost_map[item]
+			quick_print(indent, "-", item, "requires", format_number(count), "have", format_number(have), "=> needs", format_number(need))
+			dump_item_costs(indent + "  ", sub_cost_map)
+
+	quick_print("Unlock costs:")
+	for unlock in unlock_cost_map:
+		component_cost_map, total = unlock_cost_map[unlock]
+		quick_print("-", unlock, "(", format_number(total), "items", ")")
+		dump_item_costs("  ", component_cost_map)
+
+# Farm a round
+def farm_for_next_unlock(ctx, get_inventory):
+
+	available_unlocks = get_available_unlocks()
+	unlock_cost_map = get_selected_unlock_costs(available_unlocks, None)
+	dump_unlock_costs(unlock_cost_map)
+	selected_unlock, item_count, selected_cost_map = select_next_unlock(unlock_cost_map)
+	quick_print()
+	print("Unlocking", selected_unlock)
+	do_a_flip()
+	
+	if item_count == 0:
+		unlock(selected_unlock)
 		pet_the_piggy()
+		do_a_flip()
+		map.init(None, None)
 		return True
 
-	print("Farming failed")
-	return False 
+	return farm.farm_for(selected_cost_map, ctx)
 	
-def farm_unlocks(context, get_inventory):
-	while farm_next_unlock(context, get_inventory):
+def farm_unlocks(ctx, get_inventory):
+	while farm_for_next_unlock(ctx, get_inventory):
 		pass
 	
-		

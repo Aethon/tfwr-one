@@ -1,8 +1,10 @@
-import testing
-import map
-import farming_context
-import farming_tests
+import strategy
 
-map.init(None, None)
+available_unlocks = strategy.get_available_unlocks()
+unlock_cost_map = strategy.get_selected_unlock_costs(available_unlocks, None)
 
-farming_tests.test_strange((20, 20, 10, 10))
+strategy.dump_unlock_costs(unlock_cost_map)
+
+selected_unlock, selected_cost_map = strategy.select_next_unlock(unlock_cost_map)
+quick_print()
+quick_print("Selected", selected_unlock)
