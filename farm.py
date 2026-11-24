@@ -1,20 +1,19 @@
-from movement import move_to
-import hay
-import wood
-import carrots
-import pumpkin
-import power
-import cactus
-import strange
+import farm_hay
+import farm_wood
+import farm_carrots
+import farm_pumpkin
+import farm_power
+import farm_cactus
+import farm_weird
 
 _farmers = {}
-_farmers[Items.Hay] = { "crop": Entities.Grass, "farm": hay.farm }
-_farmers[Items.Wood] = { "crop": Entities.Tree, "farm": wood.farm }
-_farmers[Items.Carrot] = { "crop": Entities.Carrot, "farm": carrots.farm }
-_farmers[Items.Pumpkin] = { "crop": Entities.Pumpkin, "source_factor": 1.5, "farm": pumpkin.farm }
-_farmers[Items.Power] = { "crop": Entities.Sunflower, "farm": power.farm }
-_farmers[Items.Cactus] = { "crop": Entities.Cactus, "farm": cactus.farm }
-_farmers[Items.Weird_Substance] = { "crop": None, "farm": strange.farm }
+_farmers[Items.Hay] = { "crop": Entities.Grass, "farm": farm_hay.farm }
+_farmers[Items.Wood] = { "crop": Entities.Tree, "farm": farm_wood.farm }
+_farmers[Items.Carrot] = { "crop": Entities.Carrot, "farm": farm_carrots.farm }
+_farmers[Items.Pumpkin] = { "crop": Entities.Pumpkin, "source_factor": 1.5, "farm": farm_pumpkin.farm }
+_farmers[Items.Power] = { "crop": Entities.Sunflower, "farm": farm_power.farm }
+_farmers[Items.Cactus] = { "crop": Entities.Cactus, "farm": farm_cactus.farm }
+_farmers[Items.Weird_Substance] = { "crop": None, "farm": farm_weird.farm }
 
 def get_entity_for_item(item):
 	if item not in _farmers:

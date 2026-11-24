@@ -1,7 +1,7 @@
 import map
 import farm_context
 import profile
-import pumpkin
+import farm_pumpkin
 
 map.init(None, None)
 

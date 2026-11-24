@@ -1,14 +1,14 @@
 import areas
 import contexts
+
 _dx = None
 _dy = None
 _plots = None
+_area = None
 _ctx = None
 
 # Move to the give spot, using a wrap if it is closer                                
 def move_to_pos(pos):
-	global _dx
-	global _dy
 	x, y = pos
 	_move_to_axis(get_pos_x(), x, _dx, East, West)
 	_move_to_axis(get_pos_y(), y, _dx, North, South)
@@ -46,6 +46,7 @@ def init(size, init_plot):
 	global _dx
 	global _dy
 	global _plots
+	global _area
 	global _ctx
 
 	clear()
@@ -56,9 +57,9 @@ def init(size, init_plot):
 		_dx = world_size
 		_dy = world_size
 	else:
-		dx, dy = size
-		_dx = max(min(dx, world_size), 1)
-		_dy = max(min(dy, world_size), 1)
+		cx, cy = size
+		_dx = max(min(cx, world_size), 1)
+		_dy = max(min(cy, world_size), 1)
 	
 	_plots = []
 				
@@ -70,12 +71,15 @@ def init(size, init_plot):
 			if init_plot != None:
 				init_plot(plot)
 			_plots.append(plot)
+	
+	_area = areas.create_absolute(0, 0, _dx, _dy)
+	_ctx = contexts.create(_area)
 
-	_ctx = context.create((0, 0, _dx, _dy))
-
-def ctx():
+def get_area():
+	return _area
+	
+def get_context():
 	return _ctx
-
 def get_size():
 	return _dx, _dy
 	
@@ -102,50 +106,40 @@ def normalize(area):
 	global _dx
 	global _dy
 	if area == None:
-		xi = None
-		yi = None
-		dx = None
-		dy = None
+		x0 = None
+		y0 = None
+		cx = None
+		cy = None
 	else:
-		xi, yi, dx, dy = area
+		x0, y0, cx, cy = area
 
-	xi = _normalize_axis_start(xi, _dx)
-	yi = _normalize_axis_start(yi, _dy)
-	dx = _normalize_axis_count(dx, xi, _dx)
-	dy = _normalize_axis_count(dy, yi, _dy)    
+	x0 = _normalize_axis_start(x0, _dx)
+	y0 = _normalize_axis_start(y0, _dy)
+	cx = _normalize_axis_count(cx, x0, _dx)
+	cy = _normalize_axis_count(cy, y0, _dy)    
 				
-	return xi, yi, dx, dy
-	
-def is_in_area(pos, area):
-	x, y = pos
-	xi, yi, dx, dy = area
-	return not (x < xi or x >= xi + dx or y < yi or y >= yi + dy)
+	return x0, y0, cx, cy
 
-def get_pos_in_area(pos, area):
-	x, y = pos
-	xi, yi, dx, dy = area
-	in_pos = min(xi + max(x, 0), dx), min(yi + max(y, 0), dy)
-	return in_pos
-		
-def create_serpentine_pattern(area):
-	xi, yi, dx, dy = normalize(area)
+
+def create_serpentine_pattern(ctx):
+	x0, y0, cx, cy, _ = contexts.get_area(ctx)
 	
 	pattern = []
-	for x in range(xi, xi + dx):
+	for x in range(x0, x0 + cx):
 		if x % 2 == 0:
-			r = range(yi, yi + dy)
+			r = range(y0, y0 + cy)
 		else:
-			r = range(yi + dy - 1, yi - 1, -1)
+			r = range(y0 + cy - 1, y0 - 1, -1)
 		for y in r:
 			pattern.append((x, y))
 	return pattern
 	
-def do_for_pattern(pattern, action, context):
+def do_for_pattern(pattern, action, ctx):
 	current = 0
 	for pos in pattern:
 		x, y = pos
 		move_to(x, y)
-		if not action(context):
+		if not action(ctx):
 			return False
 	return True
 

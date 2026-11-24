@@ -1393,7 +1393,7 @@ class Items(_Enum):
 
     Carrot: Item
     """
-    Obtained by harvesting carrots.
+    Obtained by harvesting farm_carrots.
     """
 
     Coal: Item
@@ -1658,8 +1658,8 @@ class Unlocks(_Enum):
 
 	Carrots: Unlock
 	"""
-	Unlock: Till the soil and plant carrots.
-	Upgrade: Increases the yield and cost of carrots.
+	Unlock: Till the soil and plant farm_carrots.
+	Upgrade: Increases the yield and cost of farm_carrots.
 	"""
 
 	Coal: Unlock

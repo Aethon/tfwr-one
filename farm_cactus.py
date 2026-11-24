@@ -1,29 +1,32 @@
 import map
-from farm_common import harvest_with_companion
+import contexts
+from farm_common import harvest_with_companion, plant_crop
 
 CACTUS_LIST_KEY = "cactii"
 NO_OVERPLANTS = [ Entities.Cactus ]
 
-def farm_plot(context):
-	global CACTUS_LIST_KEY
-	global NO_OVERPLANTS
+def plant_cactus():
+	if get_ground_type() != Grounds.Soil:
+		till()
+	return plant(Entities.Cactus)
+
+def farm_plot(ctx):
 	
 	if get_entity_type() == Entities.Cactus:
 		if can_harvest():
 			# all good; no need to come back
 			return True
 	else:        
-		harvest_with_companion(context, True, NO_OVERPLANTS)
-		if get_ground_type() != Grounds.Soil:
-			till()
-		plant(Entities.Cactus)
-		
+		harvest_with_companion(ctx, True, NO_OVERPLANTS)
+		if not plant_crop(ctx, plant_cactus):
+			return False
+
 	# need to come back and check on it
-	context[CACTUS_LIST_KEY].append((get_pos_x(), get_pos_y()))
+	contexts.get_value(ctx, CACTUS_LIST_KEY).append((get_pos_x(), get_pos_y()))
 	return True
 
-def _sort(context, unsorted_rows, unsorted_cols):
-	xi, yi, dx, dy = context["area"]
+def _sort(ctx, unsorted_rows, unsorted_cols):
+	xi, yi, dx, dy, _ = contexts.get_area(ctx)
 	next_unsorted_rows = set()
 	next_unsorted_cols = set()
 	
@@ -59,22 +62,22 @@ def _sort(context, unsorted_rows, unsorted_cols):
 	
 	return next_unsorted_rows, next_unsorted_cols
 	
-def farm(context):
-	global CACTUS_LIST_KEY
-	
+def farm(ctx):
 	change_hat(Hats.Cactus_Hat)
-	
+	pat = map.create_serpentine_pattern(ctx)
+	local_ctx = contexts.create_override(ctx)
+
 	# plant all cactii and wait for them to mature
-	pat = map.create_serpentine_pattern(context["area"])
-	context[CACTUS_LIST_KEY] = []
-	while map.do_for_pattern(pat, farm_plot, context):
-		pat = context[CACTUS_LIST_KEY]
+	while True:
+		next_pat = []
+		contexts.set_value(local_ctx, CACTUS_LIST_KEY, next_pat)
+		map.do_for_pattern(pat, farm_plot, local_ctx)
+		pat = next_pat
 		if len(pat) == 0:
 			break
-		context[CACTUS_LIST_KEY] = []
 	
 	# sort them all
-	xi, yi, dx, dy = context["area"]
+	xi, yi, dx, dy, _ = contexts.get_area(ctx)
 	unsorted_rows = set()
 	for y in range(yi, yi + dy):
 		unsorted_rows.add(y)
@@ -84,7 +87,7 @@ def farm(context):
 		unsorted_cols.add(x)
 	
 	while len(unsorted_rows) > 0 or len(unsorted_cols) > 0:
-		unsorted_rows, unsorted_cols = _sort(context, unsorted_rows, unsorted_cols)
+		unsorted_rows, unsorted_cols = _sort(ctx, unsorted_rows, unsorted_cols)
 	
 	return harvest()
 	

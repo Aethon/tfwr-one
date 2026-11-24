@@ -21,7 +21,7 @@ def get_value(ctx, key):
 	if key in props:
 		return props[key]
 	
-	if base != None
+	if base != None:
 		return get_value(base, key)
 
 	return None
