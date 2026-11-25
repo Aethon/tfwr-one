@@ -1,11 +1,11 @@
 from common import ceil
 import map
+import drones
 import areas
 import contexts
 import farm_context
 from farm_common import harvest_with_companion, plant_crop, NO_COSTS, get_unlock_yield
 
-PUMPKIN_LIST_KEY = "pumpkins"
 NO_OVERPLANTS = [ Entities.Pumpkin ]
 
 def get_crop_costs(count, ctx):
@@ -28,133 +28,62 @@ def get_crop_costs(count, ctx):
 	return crop_count, total_yield, component_crop_costs
 
 def plant_pumpkin():
+	if get_ground_type() != Grounds.Soil:
+		till()
 	return plant(Entities.Pumpkin)
 
-def farm_plot(ctx):
-	
-	if get_entity_type() == Entities.Pumpkin:
-		if can_harvest():
-			# all good; no need to come back
-			return True
-	else:        
-		harvest_with_companion(ctx, True, NO_OVERPLANTS)
-		if get_ground_type() != Grounds.Soil:
-			till()
-		plant_crop(ctx, plant_pumpkin)
-		
-	# need to come back and check on it
-	contexts.get_value(ctx, PUMPKIN_LIST_KEY).append((get_pos_x(), get_pos_y()))
-	return True
-	
-def farm_block_crop(ctx):
+def _make_farm_task(ctx, area, hat):
+	block_ctx = contexts.create_override_slice(ctx, area)
+	pat = map.create_serpentine_pattern(block_ctx)
 
-	change_hat(Hats.Pumpkin_Hat)
-	
-	while True:
-		local_ctx = contexts.create_override(ctx)
-		pat = map.create_serpentine_pattern(local_ctx)
+	def farm_area():
+		if hat != None:
+			change_hat(hat)
+
+		run_pat = pat
 		while True:
 			next_pat = []
-			contexts.set_value(local_ctx, PUMPKIN_LIST_KEY, next_pat)
-			if not map.do_for_pattern(pat, farm_plot, local_ctx):
+			def farm_plot(_):
+				if get_entity_type() == Entities.Pumpkin:
+					if can_harvest():
+						# all good; no need to come back
+						return True
+				else:        
+					harvest() # harvest_with_companion(ctx, True, NO_OVERPLANTS)
+					plant_crop(block_ctx, plant_pumpkin)
+					
+				# need to come back and check on it
+				next_pat.append((get_pos_x(), get_pos_y()))
+				return True
+
+			if not map.do_for_pattern(run_pat, farm_plot, block_ctx):
 				return False
-			pat = next_pat
-			if len(pat) == 0:
-				break
-			farm_context.set_water_to(local_ctx, 0.5) # only water on the cleanup passes
-		harvest()
-		
-		if farm_context.check_farming_goal(ctx):
-			return True
-				
-# def _plant_col_d(info):
-# 	col, y0, cy = info
-# 	ready = False
-# 	while not ready:
-# 		ready = True
-# 		for row in range(y0, y0 + cy):
-# 			map.move_to(col, row)
-# 			if get_entity_type() == Entities.Pumpkin:
-# 				if not can_harvest():
-# 					ready = False
-# 					if get_water() < 0.5 and num_items(Items.Water) > 0:
-# 						use_item(Items.Water)
-# 			else:        
-# 				ready = False
-# 				harvest()
-# 				if get_ground_type() != Grounds.Soil:
-# 					till()
-# 				plant_pumpkin()
+			run_pat = next_pat
+			if len(run_pat) == 0:
+				return
+			farm_context.set_water_to(block_ctx, 0.5) # only water on the cleanup passes
 
-# def _manage_block_plot(ctx):
-# 	if get_entity_type() == Entities.Pumpkin:
-# 		if not can_harvest():
-# 			ready = False
-# 			if get_water() < 0.5 and num_items(Items.Water) > 0:
-# 				use_item(Items.Water)
-# 	else:        
-# 		ready = False
-# 		harvest()
-# 		if get_ground_type() != Grounds.Soil:
-# 			till()
-# 		plant_pumpkin()
-
-# def _farm_block_d(info):
-# 	ctx = info
-# 	pat = map.create_serpentine_pattern(ctx)
-# 	ready = False
-# 	while not ready:
-# 		ready = True
-# 		for row in range(y0, y0 + cy):
-# 			map.move_to(col, row)
-# 			if get_entity_type() == Entities.Pumpkin:
-# 				if not can_harvest():
-# 					ready = False
-# 					if get_water() < 0.5 and num_items(Items.Water) > 0:
-# 						use_item(Items.Water)
-# 			else:        
-# 				ready = False
-# 				harvest()
-# 				if get_ground_type() != Grounds.Soil:
-# 					till()
-# 				plant_pumpkin()
-
-def _farm_block(ctx, bx, by, bcx, bcy):
-	x0, y0, cx, cy, _ = contexts.get_area(ctx)
-	block_ctx = contexts.create_override_slice(ctx, areas.create_relative(bx * bcx, by * bcy, bcx - 1, bcy - 1))
-	drone = spawn_drone(farm_block_crop, block_ctx)
-	if drone != None:
-		return drone
-	
-	farm_block_crop(block_ctx)
-	return None
+	return farm_area
 
 def farm_crop(ctx):
 	
 	change_hat(Hats.Pumpkin_Hat)
 
-	# plant all and patrol until healthy
-	#x0, y0, cx, cy, _ = contexts.get_area(ctx)
-	#map.move_to(cx // 2, cy // 2)
-	drones = []
-	for col in range(0, 4):
-		for row in range(0, 4):
-			drone = _farm_block(ctx, col, row, 8, 8)
-			if drone != None:
-				drones.append(drone)
-	for drone in drones:
-		wait_for(drone)
+	work_areas = areas.divide(map.get_area(), 4, 4, 32, True)
+	direct_area = work_areas.pop()
 
-	# # plant all and patrol until healthy
-	# x0, y0, cx, cy, _ = contexts.get_area(ctx)
-	# drones = []
-	# for col in range(x0 + 1, x0 + cx):
-	# 	drone = spawn_drone(_plant_col_d, (col, y0, cy))
-	# 	drones.append(drone)
-	# _plant_col_d((x0, y0, cy))
-	# for drone in drones:
-	# 	wait_for(drone)
-	
-	# harvest()
+	while True:
+		work = []
+		for drone_area in work_areas:
+			work.append(_make_farm_task(ctx, drone_area, Hats.Pumpkin_Hat))
+		direct = [ _make_farm_task(ctx, direct_area, None) ]
+		drones.run_work(work, direct)
+
+		harvest()
+
+		# until the goal is achieved
+		if farm_context.check_farming_goal(ctx):
+			return True
+
 
 	return True

@@ -61,7 +61,7 @@ def _make_plant_task(ctx, area, hat):
 		for i in range(7, 16):
 			petals.append([])
 
-		def plant_plot(pctx):
+		def plant_plot(_):
 			plant_sunflower()
 			p = measure()
 			petals[p - 7].append((get_pos_x(), get_pos_y()))

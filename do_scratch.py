@@ -8,7 +8,7 @@ import farm_context
 # import farm_weird
 # import farm_gold
 # import farm_cactus
-# import farm_pumpkin
+import farm_pumpkin
 # import farm_bones
 # import farm_carrots
 import farm_power
@@ -39,12 +39,9 @@ map.init(32, None)
 #     spawn_drone(color_d, (sub, id))
 #     id = id + 1
 
-
-
-
 ctx = contexts.create_override(map.get_context())
-farm_context.set_farming_goal_check(ctx, Items.Power, 100000)
-farm_power.farm_crop(ctx)
+farm_context.set_farming_goal_check(ctx, Items.Pumpkin, 400000000)
+farm_pumpkin.farm_crop(ctx)
 
 # #farm.dump_crop_costs(Items.Hay, farm.get_crop_costs(map.get_context(), Items.Hay, 1000000))
 # #farm.dump_crop_costs(Items.Gold, farm.get_crop_costs(map.get_context(), Items.Gold, 1000000))
