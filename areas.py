@@ -65,3 +65,73 @@ def get_base_pos(pos, area):
 	x0, y0, cx, cy, _ = area
 
 	return min(x0 + max(x, 0), cx), min(y0 + max(y, 0), cy)
+
+def divide_into(area, col_count, row_count, fill):
+	x0, y0, cx, cy, rel = area
+
+	sx = (cx / col_count) // 1
+	sy = (cy / row_count) // 1
+	
+	extra_x = 0
+	extra_y = 0
+	if fill:
+		extra_x = cx - sx * col_count
+		extra_y = cy - sy * row_count
+
+	sub_areas = []
+	if (rel):
+		tx = 0
+	else:
+		tx = x0
+	for x in range(0, col_count):
+		tdx = sx
+		if extra_x > 0:
+			tdx = tdx + 1
+
+		if (rel):
+			ty = 0
+		else:
+			ty = y0
+		for y in range(0, row_count):
+			tdy = sy
+			if extra_y > 0:
+				tdy = tdy + 1
+			sub_areas.append(_create(tx, ty, tdx, tdy, rel))
+			ty = ty + tdy
+
+		tx = tx + tdx
+
+	return sub_areas
+
+def divide(area, min_cx, min_cy, max_areas, fill):
+	x0, y0, cx, cy, rel = area
+
+	max_col_count = cx // min_cx
+	max_row_count = cy // min_cy
+
+	best_area_count = 0
+	best_total_area = 0
+	best_cols = 0
+	best_rows = 0
+	
+	for cols in range(max_col_count, 0, -1):
+		for rows in range(max_row_count, 0, -1):
+			if rows * cols > max_areas:
+				continue
+
+			nx = cx // cols
+			ny = cy // rows
+			if nx < 1 or ny < 1:
+				continue
+			ac = cols * rows
+			ta = ac * nx * ny
+			if ac > best_area_count or ac == best_area_count and ta > best_total_area:
+				best_area_count = ac
+				best_total_area = ta
+				best_cols = cols
+				best_rows = rows
+
+	if best_area_count == 0:
+		return [area]
+
+	return divide_into(area, best_cols, best_rows, False)

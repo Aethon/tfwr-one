@@ -3,6 +3,8 @@ import areas
 import contexts
 import farm_context
 
+NO_COSTS = (0, 0, {})
+
 # ensure the ground has a minimum amount of water
 def water(min):
 	if (get_water() < min and num_items(Items.Water) > 0):
@@ -62,5 +64,11 @@ def harvest_with_companion(ctx, force, no_everplants):
 	return harvest()
 	
 
+def get_unlock_yield(unlock):
+	return 2**(num_unlocked(unlock) - 1)
 
-	
+def get_polyculture_yield():
+	num = num_unlocked(Unlocks.Polyculture)
+	if num == 0:
+		return 1
+	return 5 * 2**(num - 1)

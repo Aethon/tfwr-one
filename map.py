@@ -51,15 +51,13 @@ def init(size, init_plot):
 
 	clear()
 	
-	world_size = get_world_size()
-	
 	if size == None:
-		_dx = world_size
-		_dy = world_size
+		size = get_world_size()
 	else:
-		cx, cy = size
-		_dx = max(min(cx, world_size), 1)
-		_dy = max(min(cy, world_size), 1)
+		set_world_size(size)
+	
+	_dx = size
+	_dy = size
 	
 	_plots = []
 				

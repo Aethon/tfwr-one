@@ -113,7 +113,6 @@ def dump_unlock_costs(unlock_cost_map):
 
 # Farm a round
 def farm_for_next_unlock(ctx, get_inventory):
-
 	available_unlocks = get_available_unlocks()
 	unlock_cost_map = get_selected_unlock_costs(available_unlocks, None)
 	dump_unlock_costs(unlock_cost_map)

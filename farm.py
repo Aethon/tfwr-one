@@ -14,17 +14,17 @@ import farm_gold
 _POWER_MIN = 50000
 _POWER_MAX = 60000
 
-# (order: int, crop: Entities, unlock: Unlocks, failure_rate: nun(0..1), farm: func(ctx))
+# (order: int, crop: Entities, unlock: Unlocks, failure_rate: nun(0..1), farm: func(ctx), get_crop_cost: func(count, ctx))
 _crop_info = {}
-_crop_info[Items.Wood] = (0, Entities.Tree, Unlocks.Trees, 0.0, farm_wood.farm)
-_crop_info[Items.Hay] = (1, Entities.Grass, Unlocks.Grass, 0.0, farm_hay.farm)
-_crop_info[Items.Carrot] = (2, Entities.Carrot, Unlocks.Carrots, 0.0, farm_carrots.farm)
-_crop_info[Items.Pumpkin] = (3, Entities.Pumpkin, Unlocks.Pumpkins,  0.4, farm_pumpkin.farm)
-_crop_info[Items.Power] = (4, Entities.Sunflower, Unlocks.Sunflowers, 0.0, farm_power.farm)
-_crop_info[Items.Cactus] = (5, Entities.Cactus, Unlocks.Cactus, 0.0, farm_cactus.farm)
-_crop_info[Items.Weird_Substance] = (6, None, None, 0.0, farm_weird.farm)
-_crop_info[Items.Bone] = (7, None, Unlocks.Dinosaurs, 0.0, farm_bones.farm)
-_crop_info[Items.Gold] = (8, None, Unlocks.Treasure_Map, 0.0, farm_gold.farm)
+_crop_info[Items.Wood] = (0, Entities.Tree, Unlocks.Trees, 0.0, farm_wood.farm_crop, farm_wood.get_crop_costs)
+_crop_info[Items.Hay] = (1, Entities.Grass, Unlocks.Grass, 0.0, farm_hay.farm_crop, farm_hay.get_crop_costs)
+_crop_info[Items.Carrot] = (2, Entities.Carrot, Unlocks.Carrots, 0.0, farm_carrots.farm_crop, farm_carrots.get_crop_costs)
+_crop_info[Items.Pumpkin] = (3, Entities.Pumpkin, Unlocks.Pumpkins,  0.4, farm_pumpkin.farm_crop, farm_pumpkin.get_crop_costs)
+_crop_info[Items.Power] = (4, Entities.Sunflower, Unlocks.Sunflowers, 0.0, farm_power.farm_crop, farm_power.get_crop_costs)
+_crop_info[Items.Cactus] = (5, Entities.Cactus, Unlocks.Cactus, 0.0, farm_cactus.farm_crop, farm_cactus.get_crop_costs)
+_crop_info[Items.Weird_Substance] = (6, None, None, 0.0, farm_weird.farm_crop, farm_weird.get_crop_costs)
+_crop_info[Items.Bone] = (7, None, Unlocks.Dinosaurs, 0.0, farm_bones.farm_crop, farm_bones.get_crop_costs)
+_crop_info[Items.Gold] = (8, None, Unlocks.Treasure_Map, 0.0, farm_gold.farm_crop, farm_gold.get_crop_costs)
 
 def get_entity_for_item(item):
 	if item not in _crop_info:
@@ -40,7 +40,13 @@ def get_yield_for_item(item):
 
 def can_farm(item):
 	return item in _crop_info
- 
+
+def get_crop_costs(ctx, item, count):
+	if item not in _crop_info:
+		return None
+	_, _, _, _, _, get = _crop_info[item]
+	return get(count, ctx)
+
 def _collect_costs(component_cost_map, total_cost_map):
 	for item in component_cost_map:
 		_, _, item_count, sub_cost_map, _ = component_cost_map[item]
@@ -100,3 +106,12 @@ def farm_for(component_cost_map, ctx):
 
 	print("Planting", entity)
 	return farm(ctx)
+
+def dump_crop_costs(item, crop_cost):
+	def dump(indent, cost_map):
+		for item in cost_map:
+			crop_count, total_yield, sub_cost_map = cost_map[item]
+			quick_print(indent, "-", item, "=>", crop_count, "crops", "for", format_number(total_yield))
+			dump(indent + "  ", sub_cost_map)
+
+	dump("", { item: crop_cost })

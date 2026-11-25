@@ -22,7 +22,7 @@ def test_hay(area):
 	farm_wood.plant_bush()
 	testing.assert_not(farm_hay.plant_grass(), "planting grass on non-empty")
 	
-	testing.assert(farm_hay.farm(ctx), "farming hay")
+	testing.assert(farm_hay.farm_crop(ctx), "farming hay")
 
 def test_wood(area):
 	ctx = contexts.create_override_slice(map.get_context(), area)
@@ -43,7 +43,7 @@ def test_wood(area):
 	# does not plant on non-empty
 	testing.assert_not(farm_wood.plant_tree(), "planting tree on non-empty")
 			
-	testing.assert(farm_wood.farm(ctx), "farming wood")
+	testing.assert(farm_wood.farm_crop(ctx), "farming wood")
 	
 def test_carrots(area):
 	ctx = contexts.create_override_slice(map.get_context(), area)
@@ -57,24 +57,24 @@ def test_carrots(area):
 	# does not plant on non-empty
 	testing.assert_not(farm_carrots.plant_carrots(), "planting carrots on non-empty")
 					
-	testing.assert(farm_carrots.farm(ctx), "farming carrots")
+	testing.assert(farm_carrots.farm_crop(ctx), "farming carrots")
 	
 def test_pumpkin(area):
 	ctx = contexts.create_override_slice(map.get_context(), area)	
 						
-	testing.assert(farm_pumpkin.farm(ctx), "farming pumpkin")
+	testing.assert(farm_pumpkin.farm_crop(ctx), "farming pumpkin")
 	
 def test_power(area):
 	ctx = contexts.create_override_slice(map.get_context(), area)
 						
-	testing.assert(farm_power.farm(ctx), "farming power")
+	testing.assert(farm_power.farm_crop(ctx), "farming power")
 	
 def test_cactus(area):
 	ctx = contexts.create_override_slice(map.get_context(), area)
 						
-	testing.assert(farm_cactus.farm(ctx), "farming cactus")
+	testing.assert(farm_cactus.farm_crop(ctx), "farming cactus")
 	
 def test_weird(area):
 	ctx = contexts.create_override_slice(map.get_context(), area)
 						
-	testing.assert(farm_weird.farm(ctx), "farming strange")
+	testing.assert(farm_weird.farm_crop(ctx), "farming strange")

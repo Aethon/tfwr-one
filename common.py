@@ -16,3 +16,9 @@ def pow2(exp):
 	for _ in range(exp, 1, -1):
 		val = val * 2
 	return val
+
+def ceil(val):
+	whole = val // 1
+	if val % 1 == 0:
+		return whole
+	return whole + 1
